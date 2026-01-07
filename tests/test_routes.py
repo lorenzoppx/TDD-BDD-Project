@@ -28,6 +28,7 @@ import os
 import logging
 from decimal import Decimal
 from unittest import TestCase
+from urllib import response
 from service import app
 from service.common import status
 from service.models import db, init_db, Product
@@ -163,9 +164,98 @@ class TestProductRoutes(TestCase):
         response = self.client.post(BASE_URL, data={}, content_type="plain/text")
         self.assertEqual(response.status_code, status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
 
-    #
-    # ADD YOUR TEST CASES HERE
-    #
+    def test_get_product(self):
+        """read product products"""
+        products = self._create_products(1)
+        test_product = products[0]
+        response = self.client.get(BASE_URL+"/"+str(test_product.id))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.get_json()
+        self.assertEqual(test_product.serialize(), data)
+
+    def test_get_product_not_found(self):
+        """read product product not found"""
+        num = 10
+        response = self.client.get(BASE_URL+"/"+str(num))
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        data = response.get_json()
+        self.assertIn("was not found", data["message"])
+    
+    def test_update_product(self):
+        """update product products"""
+        products_ = self._create_products(1)
+        test_product = products_[0]
+        test_product.description = "Updated Description"
+        response = self.client.put(
+            BASE_URL+"/"+str(test_product.id), json=test_product.serialize()
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.get_json()
+        self.assertEqual(data["description"], "Updated Description")
+
+    def test_delete_product(self):
+        """delete product products"""
+        products_ = self._create_products(10)
+        test_product = products_[0]
+        response = self.client.delete(
+            BASE_URL+"/"+str(test_product.id)
+        )
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        response = self.client.get(
+            BASE_URL+"/"+str(test_product.id)
+        )
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_list_all_products(self):
+        """get list all products"""
+        self._create_products(10)
+        response = self.client.get(BASE_URL)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        response_data = response.get_json()
+        self.assertEqual(len(response_data), 10)
+
+    def test_name_query_products(self):
+        """Query by name of products"""
+        products_ = self._create_products(10)
+        response = self.client.get(BASE_URL, query_string={"name": products_[0].name})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        occurrences = 0
+        for i in products_:
+            if i.name == products_[0].name:
+                occurrences += 1
+        response_data = response.get_json()
+        self.assertEqual(len(response_data), occurrences)
+        for item in response_data:
+            self.assertEqual(item["name"], products_[0].name)
+
+    def test_category_query_products(self):
+        """Query by name of products"""
+        products_ = self._create_products(10)
+        response = self.client.get(BASE_URL, query_string={"category": products_[0].category.name})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        occurrences = 0
+        for i in products_:
+            if i.category == products_[0].category:
+                occurrences += 1
+        response_data = response.get_json()
+        self.assertEqual(len(response_data), occurrences)
+        for item in response_data:
+            self.assertEqual(item["category"], products_[0].category.name)
+
+
+    def test_availability_query_products(self):
+        """Query by available of products"""
+        products_ = self._create_products(10)
+        response = self.client.get(BASE_URL, query_string={"available": products_[0].available})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        occurrences = 0
+        for i in products_:
+            if i.available == products_[0].available:
+                occurrences += 1
+        response_data = response.get_json()
+        for item in response_data:
+            self.assertEqual(item["available"], products_[0].available)
+
 
     ######################################################################
     # Utility functions

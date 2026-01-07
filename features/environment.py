@@ -3,11 +3,11 @@ Environment for Behave Testing
 """
 from os import getenv
 from selenium import webdriver
+from webdriver_manager.firefox import GeckoDriverManager
 
 WAIT_SECONDS = int(getenv('WAIT_SECONDS', '30'))
 BASE_URL = getenv('BASE_URL', 'http://localhost:8080')
 DRIVER = getenv('DRIVER', 'firefox').lower()
-
 
 def before_all(context):
     """ Executed once before all tests """
@@ -42,5 +42,6 @@ def get_firefox():
     """Creates a headless Firefox driver"""
     options = webdriver.FirefoxOptions()
     options.add_argument("--headless")
-    return webdriver.Firefox(options=options)    
+    return webdriver.Firefox(executable_path=GeckoDriverManager().install())
+  
     

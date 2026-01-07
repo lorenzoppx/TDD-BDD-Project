@@ -104,3 +104,136 @@ class TestProductModel(unittest.TestCase):
     #
     # ADD YOUR TEST CASES HERE
     #
+
+    def test_read_product(self):
+        "Test read a product in DB"
+        n = ProductFactory()
+        n.id = None
+        print("This is the product factory", n)
+        m = Product()
+        m.deserialize(n.serialize())
+        m.create()
+        print("This is the product", m)
+        print("Create the product")
+        p = Product.find(m.id)
+        print("Find the product")
+        self.assertIsNotNone(p)
+        self.assertEqual(p.name, n.name)
+        self.assertEqual(p.description, n.description)
+        self.assertEqual(p.price, n.price)
+        self.assertEqual(p.available, n.available)
+        self.assertEqual(p.category, n.category)
+
+    
+    def test_update_product(self):
+        "Test update a product in DB"
+        n = ProductFactory()
+        n.id = None
+        print("This is the product factory", n)
+        m = Product()
+        m.deserialize(n.serialize())
+        m.create()
+        print("This is the product", m)
+        print("Create the product")
+        m.description = "New Desc Updated"
+        m.update()
+        print("Update the product", m)
+        p = Product.all()
+        self.assertEqual(len(p), 1)
+        print("Find the product")
+        self.assertIsNotNone(p)
+        self.assertEqual(p[0].id, m.id)
+        self.assertEqual(p[0].description, "New Desc Updated")
+
+
+    def test_delete_product(self):
+        "Test delete a product in DB"
+        n = ProductFactory()
+        n.id = None
+        print("This is the product factory", n)
+        m = Product()
+        m.deserialize(n.serialize())
+        m.create()
+        p = Product.all()
+        self.assertEqual(len(p), 1)
+        print("This is the product", m)
+        print("Create the product")
+        m.delete()
+        print("Delete the product", m)
+        p = Product.all()
+        self.assertEqual(len(p), 0)
+
+    def test_list_all_product(self):
+        "Test list all products in DB"
+        products = Product.all()
+        self.assertEqual(len(products), 0)
+
+        for i in range(5):
+            n = ProductFactory()
+            n.id = None
+            print("This is the product factory ",i,":", n)
+            m = Product()
+            m.deserialize(n.serialize())
+            m.create()
+
+        products = Product.all()
+        self.assertEqual(len(products), 5)
+
+
+    def test_find_by_availability_product(self):
+        "Test find a product by availability in DB"
+
+        products = ProductFactory.create_batch(10)
+
+        for n in products:
+            n.id = None
+            n.create()
+
+        availability_ref = products[0].available
+        occurences = 0
+        for i in range(len(products)):
+            if products[i].available == availability_ref:
+                occurences += 1
+        products = Product.find_by_availability(True)
+        self.assertEqual(products.count(), occurences)
+        for product in products:
+            self.assertEqual(product.available, True)
+
+
+    def test_find_by_name_product(self):
+        "Test find a product by name in DB"
+        products = ProductFactory.create_batch(10)
+
+        for n in products:
+            n.id = None
+            n.create()
+
+        name_ref = products[0].name
+        occurences = 0
+        for i in range(len(products)):
+            if products[i].name == name_ref:
+                occurences += 1
+        products = Product.find_by_name(name_ref)
+        self.assertEqual(products.count(), occurences)
+        for product in products:
+            self.assertEqual(product.name, name_ref)
+
+
+    def test_find_by_category_product(self):
+        "Test find a product by category in DB"
+
+        products = ProductFactory.create_batch(10)
+
+        for n in products:
+            n.id = None
+            n.create()
+
+        cat_ref = products[0].category
+        occurences = 0
+        for i in range(len(products)):
+            if products[i].category == cat_ref:
+                occurences += 1
+        products = Product.find_by_category(cat_ref)
+        self.assertEqual(products.count(), occurences)
+        for product in products:
+            self.assertEqual(product.category, cat_ref)
